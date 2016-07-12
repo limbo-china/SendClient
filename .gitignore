@@ -1,0 +1,17 @@
+Debug/config/system.cfg
+Debug/client.conf1
+.vs/Client/v14/.suo
+*.opendb
+*.exe
+*.lk
+*.pdb
+*.pch
+*.obj
+*.res
+*.log
+*.tlog
+*.idb
+*.ilk
+*.sdf
+*.pcap
+ipch/
