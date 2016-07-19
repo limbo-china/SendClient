@@ -30,6 +30,7 @@ char g_sDataServerIP[20];
 #define DEFAULT_LOG_FILE "log/upload.inf"
 #define MD5_FILE "md5/MD5.txt"
 
+
 IMPLEMENT_DYNAMIC(CUploadInfo, CDialogEx)
 
 CUploadInfo::CUploadInfo(CWnd* pParent /*=NULL*/)
@@ -113,6 +114,16 @@ void CUploadInfo::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_URL, m_cURL);
 	DDX_Control(pDX, IDC_STATIC_URL, m_sURL);
 }
+static UINT WINAPI IsConnected(CUploadInfo* dlg)
+{
+	SocketOperation conn;
+	if (conn.Connect(g_sDataServerIP, session.m_uDataServerPort) != 0)
+	{
+		dlg->MessageBox(_T("无法连接至服务器"));
+	}
+	conn.Close();
+	return 0;
+}
 
 BEGIN_MESSAGE_MAP(CUploadInfo, CDialogEx)
 	ON_WM_CTLCOLOR()
@@ -131,7 +142,6 @@ BEGIN_MESSAGE_MAP(CUploadInfo, CDialogEx)
 	ON_STN_CLICKED(IDC_STATIC_UPLOADABOUT, &CUploadInfo::OnClickedStaticUploadabout)
 	ON_EN_CHANGE(IDC_INFO_SUBJECT, &CUploadInfo::OnEnChangeInfoSubject)
 	ON_EN_CHANGE(IDC_EDIT_URL, &CUploadInfo::OnEnChangeEditUrl)
-	//ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 
@@ -218,7 +228,7 @@ int CUploadInfo::DoUpdate()
 	SocketOperation conn;
 	int ret = -2;
 	USES_CONVERSION;
-	if (conn.Connect(g_sDataServerIP, session.m_uDataServerPort) != -1)
+	if (conn.Connect(g_sDataServerIP, session.m_uDataServerPort) == 0)
 	{
 		CString tmBuffer;
 		
@@ -277,8 +287,6 @@ int CUploadInfo::DoUpdate()
 		fprintf_s(fp, "%s\t %s\t%d %d\n*************\n", utf8Str, sndBuffer + 8, utf8Str.GetLength(), cur);
 		fclose(fp);*/
 		
-
-
 		if (send(conn.m_sock, sndBuffer, cur + 1, 0) < 0)
 		{
 			free(sndBuffer);
@@ -293,7 +301,7 @@ int CUploadInfo::DoUpdate()
 	}
 	else
 	{
-		MessageBox(_T("无法连接服务器"));
+		MessageBox(_T("无法连接至服务器"));
 	}
 	conn.Close();
 	return ret;
@@ -391,8 +399,6 @@ BOOL CUploadInfo::OnInitDialog()
 
 	 //TODO:  在此添加额外的初始化
 	
-	//FILE *fp = NULL;
-	//fopen_s(&fp, MD5_FILE, "r+");
 	int acc = access(MD5_FILE, 0);
 	if (acc != 0) 
 	{
@@ -434,7 +440,7 @@ BOOL CUploadInfo::OnInitDialog()
 			MessageBox(_T("已激活，请登录"));
 			if (!session.m_bLogin)
 			{
-				CLoginDlg ldlg;
+				CLoginDlg ldlg; 
 				if (ldlg.DoModal() != IDOK)
 					SendMessage(WM_CLOSE);
 				else
@@ -472,6 +478,9 @@ BOOL CUploadInfo::OnInitDialog()
 	
 	m_isShown = true;
 	m_bIfLogin = true;
+
+	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)IsConnected, this, 0, NULL);
+	CloseHandle(hThread);	
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
 }
@@ -514,7 +523,6 @@ void SaveUploadInfo(const char *subject, const char *content, const char *uptime
 	fprintf_s(fp, "%s\n%d\n%s\n%s\n###################\n", uptime, state, subject, content);
 	fclose(fp);
 }
-
 
 static UINT WINAPI ListenUKStatus(CUploadInfo* dlg)
 {
@@ -697,13 +705,3 @@ void CUploadInfo::OnEnChangeEditUrl()
 	// TODO:  Add your control notification handler code here
 }
 
-//void CUploadInfo::OnSize(UINT nType, int cx, int cy)
-//{
-//	CDialogEx::OnSize(nType, cx, cy);
-//
-//	CWnd *pWnd;
-//	pWnd = GetDlgItem(IDC_BUTTON_SHOWHISTORY);    //获取控件指针，IDC_BUTTON1为控件ID号
-//	pWnd->SetWindowPos(NULL, 50, 80, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
-//
-//	// TODO: 在此处添加消息处理程序代码
-//}

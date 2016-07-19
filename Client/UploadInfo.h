@@ -69,5 +69,4 @@ public:
 	CStatic m_sURL;
 	afx_msg void OnEnChangeInfoSubject();
 	afx_msg void OnEnChangeEditUrl();
-	//afx_msg void OnSize(UINT nType, int cx, int cy);
 };
