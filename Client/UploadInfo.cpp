@@ -116,10 +116,38 @@ void CUploadInfo::DoDataExchange(CDataExchange* pDX)
 }
 static UINT WINAPI IsConnected(CUploadInfo* dlg)
 {
+	::SetDlgItemText(AfxGetApp()->m_pMainWnd->m_hWnd, IDC_STATIC_STATUS2, _T("连接中..."));
 	SocketOperation conn;
 	if (conn.Connect(g_sDataServerIP, session.m_uDataServerPort) != 0)
 	{
+		::SetDlgItemText(AfxGetApp()->m_pMainWnd->m_hWnd,IDC_STATIC_STATUS2, _T("连接失败"));
+		dlg->UpdateData(FALSE);
+		// 获取标签的矩形位置
+		CRect rc;
+		GetWindowRect(GetDlgItem(AfxGetApp()->m_pMainWnd->m_hWnd, IDC_STATIC_STATUS2), &rc);
+
+
+		//转换为相对坐标
+		ScreenToClient(GetDlgItem(AfxGetApp()->m_pMainWnd->m_hWnd, IDC_STATIC_STATUS2), (LPPOINT)&rc);
+		
+		//刷新指定区域,注意第2个参数为真,即刷新背景
+		InvalidateRect(AfxGetApp()->m_pMainWnd->m_hWnd,&rc, TRUE);
 		dlg->MessageBox(_T("无法连接至服务器"));
+	}
+	else {
+		::SetDlgItemText(AfxGetApp()->m_pMainWnd->m_hWnd,IDC_STATIC_STATUS2, _T("连接成功"));
+		dlg->UpdateData(FALSE);
+
+		// 获取标签的矩形位置
+		CRect rc;
+		GetWindowRect(GetDlgItem(AfxGetApp()->m_pMainWnd->m_hWnd, IDC_STATIC_STATUS2), &rc);
+
+
+		//转换为相对坐标
+		ScreenToClient(GetDlgItem(AfxGetApp()->m_pMainWnd->m_hWnd, IDC_STATIC_STATUS2), (LPPOINT)&rc);
+
+		//刷新指定区域,注意第2个参数为真,即刷新背景
+		InvalidateRect(AfxGetApp()->m_pMainWnd->m_hWnd, &rc, TRUE);
 	}
 	conn.Close();
 	return 0;
@@ -225,6 +253,12 @@ int CUploadInfo::DoUpdate()
 		GetDlgItem(IDC_INFO_CONTENT)->SetFocus();
 		return -1;
 	}
+	if (sContent.GetLength() > 20000)
+	{
+		MessageBox(_T("内容长度不能超过2万!"));
+		GetDlgItem(IDC_INFO_CONTENT)->SetFocus();
+		return -1;
+	}
 	SocketOperation conn;
 	int ret = -2;
 	USES_CONVERSION;
@@ -265,6 +299,7 @@ int CUploadInfo::DoUpdate()
 		CStringA utf8Str = UTF16toUTF8(tmBuffer);
 		int tag = htonl(2);
 		int nLength = utf8Str.GetLength() + 1;
+
 		char *sndBuffer = (char*)calloc(1, nLength + 4 + 4);
 
 		int cur = 0;
@@ -286,8 +321,8 @@ int CUploadInfo::DoUpdate()
 		fopen_s(&fp, "out.txt", "w");
 		fprintf_s(fp, "%s\t %s\t%d %d\n*************\n", utf8Str, sndBuffer + 8, utf8Str.GetLength(), cur);
 		fclose(fp);*/
-		
-		if (send(conn.m_sock, sndBuffer, cur + 1, 0) < 0)
+		int n;
+		if ((n=send(conn.m_sock, sndBuffer, cur + 1, 0)) < 0)
 		{
 			free(sndBuffer);
 			MessageBox(_T("导入失败，请检查系统配置"));
@@ -350,7 +385,7 @@ void CUploadInfo::InitUI()
 	a_pEffect->EnableWholeDrag(TRUE);
 
 	//调整位置 
-	::SetWindowPos(m_hWnd, NULL, 0, 0, 416, 484+40, SWP_NOMOVE);
+	::SetWindowPos(m_hWnd, NULL, 0, 0, 416, 484+70, SWP_NOMOVE);
 	::SetWindowPos(GetDlgItem(IDC_STATIC_MAINCAPTION)->m_hWnd, NULL, 22, 6, 120, 16, SWP_NOZORDER);
 
 	::SetWindowPos(GetDlgItem(IDC_INFO_SUBJECT)->m_hWnd, NULL, 8, 120, 401, 23, SWP_NOZORDER);
@@ -380,8 +415,10 @@ void CUploadInfo::InitUI()
 	((CButton*)GetDlgItem(IDC_BUTTON_SEND))->SetBitmap(hBitmap);
 	((CButton*)GetDlgItem(IDC_BUTTON_SHOWHISTORY))->SetBitmap(hBitmap1);
 
-	::SetWindowPos(GetDlgItem(IDC_BUTTON_SEND)->m_hWnd, NULL, 252, 493, 53, 23, SWP_NOZORDER);
-	::SetWindowPos(GetDlgItem(IDC_BUTTON_SHOWHISTORY)->m_hWnd, NULL, 90, 493, 53, 23, SWP_NOZORDER);
+	::SetWindowPos(GetDlgItem(IDC_BUTTON_SEND)->m_hWnd, NULL, 252, 490, 53, 23, SWP_NOZORDER);
+	::SetWindowPos(GetDlgItem(IDC_BUTTON_SHOWHISTORY)->m_hWnd, NULL, 90, 490, 53, 23, SWP_NOZORDER);
+
+	::SetWindowPos(GetDlgItem(IDC_STATIC_STATUS2)->m_hWnd, NULL, 5, 530, 100, 23, SWP_NOZORDER);
 
 	m_Subject.ShowScrollBar(SB_VERT, 0);
 	m_Content.ShowScrollBar(SB_VERT, 0);
@@ -516,11 +553,11 @@ void CUploadInfo::OnPaint()
 	dc.TextOut(362, 6, _T("?"));
 }
 
-void SaveUploadInfo(const char *subject, const char *content, const char *uptime, int state)
+void SaveUploadInfo(const char *subject, const char *content, const char *uptime, int state,const char *url)
 {
 	FILE *fp = NULL;
 	fopen_s(&fp, DEFAULT_LOG_FILE, "a+");
-	fprintf_s(fp, "%s\n%d\n%s\n%s\n###################\n", uptime, state, subject, content);
+	fprintf_s(fp, "%s\n%d\n%s\n%s\n%s\n###################\n", uptime, state, subject,url, content);
 	fclose(fp);
 }
 
@@ -590,11 +627,14 @@ void CUploadInfo::OnClickedSendButton()
 	CString content;
 	GetDlgItemText(IDC_INFO_CONTENT, content);
 
+	CString url;
+	m_cURL.GetWindowTextW(url);
+
 	CString strDateTime;
 	CTime c_time = CTime::GetCurrentTime();
 	strDateTime = c_time.Format("%Y-%m-%d %H:%M:%S");
 	//USES_CONVERSION;
-	SaveUploadInfo(UTF16toUTF8(subject), UTF16toUTF8(content), UTF16toUTF8(strDateTime), ret == 0 ? 0 : 1);
+	SaveUploadInfo(UTF16toUTF8(subject), UTF16toUTF8(content), UTF16toUTF8(strDateTime), ret == 0 ? 0 : 1, UTF16toUTF8(url));
 
 	if(ret == 0)
 		ClearALlEdit();
@@ -703,5 +743,27 @@ void CUploadInfo::OnEnChangeEditUrl()
 	// with the ENM_CHANGE flag ORed into the mask.
 
 	// TODO:  Add your control notification handler code here
+}
+BOOL CUploadInfo::PreTranslateMessage(MSG* pMsg)
+{
+	int ch = (int)pMsg->wParam;
+	if (WM_KEYDOWN == pMsg->message)
+	{
+		if ((GetKeyState(VK_CONTROL) & 0xFF00) == 0xFF00)
+		{
+			if ('x' == ch || 'X' == ch)
+				::SendMessage(this->GetFocus()->GetSafeHwnd(), WM_CUT, 0, 0);
+			if ('C' == ch || 'c ' == ch)
+				::SendMessage(this->GetFocus()->GetSafeHwnd(), WM_COPY, 0, 0);
+			if ('v' == ch || 'V' == ch)
+				::SendMessage(this->GetFocus()->GetSafeHwnd(), WM_PASTE, 0, 0);
+			if ('a' == ch || 'A' == ch)
+				::SendMessage(this->GetFocus()->GetSafeHwnd(), EM_SETSEL, 0, -1);
+			if ('z' == ch || 'Z' == ch)
+				::SendMessage(this->GetFocus()->GetSafeHwnd(), EM_REDO, 0, -1);
+		}
+
+	}
+	return CDialog::PreTranslateMessage(pMsg);
 }
 

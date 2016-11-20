@@ -16,14 +16,9 @@ public:
 #endif
 
 private:
-	//virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
-	//BOOL CheckResult(int nResult);
 	DECLARE_MESSAGE_MAP()
 public:
-	//afx_msg
-	//	CStringW UTF8toUTF16(const CStringA & utf8);
 	void OnBnClickedMfcbuttonregister();
-	//virtual BOOL PreTranslateMessage(MSG* pMsg);
 	CClientApp *app = (CClientApp *)AfxGetApp();
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg void OnBnClickedButtonExit();

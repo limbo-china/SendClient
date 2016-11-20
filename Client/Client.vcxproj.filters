@@ -81,6 +81,9 @@
     <ClInclude Include="RegVerify.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="HistoryContentDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -135,6 +138,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RegVerify.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="HistoryContentDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

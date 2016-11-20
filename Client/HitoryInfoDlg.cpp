@@ -5,6 +5,7 @@
 #include "Client.h"
 #include "HitoryInfoDlg.h"
 #include "afxdialogex.h"
+#include "HistoryContentDlg.h"
 
 #define DEFAULT_LOG_FILE "log/upload.inf"
 
@@ -64,6 +65,7 @@ void CHitoryInfoDlg::LoadHistory()
 	int status;
 	CString szStatus;
 	CStringA content;
+	CStringA url;
 	CString szNum;
 	int node_cnt = 0;
 
@@ -88,6 +90,10 @@ void CHitoryInfoDlg::LoadHistory()
 		subject = line_buf;
 		if (subject == "" || line_buf[0] == '\n')
 			continue;
+		fgets(line_buf, 512, fp);
+		url = line_buf;
+		if (url == "" || line_buf[0] == '\n')
+			continue;
 		content = "";
 		while (!feof(fp))
 		{
@@ -99,12 +105,14 @@ void CHitoryInfoDlg::LoadHistory()
 		}
 		CString uft16Content = UTF8toUTF16(content);
 		CString uft16Subject = UTF8toUTF16(subject);
+		CString uft16Url = UTF8toUTF16(url);
 		szNum.Format(_T("%d"), node_cnt + 1);
 		m_tbShowInfo.InsertItem(node_cnt, szNum);
 		m_tbShowInfo.SetItemText(node_cnt, 1, time);
 		m_tbShowInfo.SetItemText(node_cnt, 2, uft16Subject);
-		m_tbShowInfo.SetItemText(node_cnt, 3, uft16Content);
-		m_tbShowInfo.SetItemText(node_cnt, 4, szStatus);
+		m_tbShowInfo.SetItemText(node_cnt, 3, uft16Url);
+		m_tbShowInfo.SetItemText(node_cnt, 4, uft16Content);
+		m_tbShowInfo.SetItemText(node_cnt, 5, szStatus);
 		//fgets(line_buf, 512, fp);
 		
 		node_cnt++;
@@ -134,8 +142,9 @@ BOOL CHitoryInfoDlg::OnInitDialog()
 	m_tbShowInfo.InsertColumn(0, _T(""), LVCFMT_LEFT, 40);
 	m_tbShowInfo.InsertColumn(1, _T("时间"), LVCFMT_LEFT, 120);
 	m_tbShowInfo.InsertColumn(2, _T("标题"), LVCFMT_LEFT, 100);
-	m_tbShowInfo.InsertColumn(3, _T("内容"), LVCFMT_LEFT, 140);
-	m_tbShowInfo.InsertColumn(4, _T("状态"), LVCFMT_LEFT, 61);
+	m_tbShowInfo.InsertColumn(3, _T("链接"), LVCFMT_LEFT, 100);
+	m_tbShowInfo.InsertColumn(4, _T("内容"), LVCFMT_LEFT, 140);
+	m_tbShowInfo.InsertColumn(5, _T("状态"), LVCFMT_LEFT, 61);
 
 	LoadHistory();
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -189,13 +198,17 @@ void CHitoryInfoDlg::OnClickList(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		CString time = m_tbShowInfo.GetItemText(pNMListView->iItem, 1);
 		CString subject = m_tbShowInfo.GetItemText(pNMListView->iItem, 2);
-		CString content = m_tbShowInfo.GetItemText(pNMListView->iItem, 3);
-		CString status = m_tbShowInfo.GetItemText(pNMListView->iItem, 4);
-		MessageBox(_T("时间:")+time+"\n"+"主题:"+subject+"\n"+"内容:"+content+"\n"+"状态:"+status);
+		CString url = m_tbShowInfo.GetItemText(pNMListView->iItem, 3);
+		CString content = m_tbShowInfo.GetItemText(pNMListView->iItem, 4);
+		CString status = m_tbShowInfo.GetItemText(pNMListView->iItem, 5);
+
+		CHistoryContentDlg  Dlg(_T("时间: ")+time+"\r\n\r\n主题: "+subject+"\r\n\r\n链接: "+
+			url+"\r\n\r\n内容: "+content+"\r\n\r\n状态: "+status);
+		Dlg.DoModal();
+		
 	}
 	*pResult = 0;
 }
-
 
 void CHitoryInfoDlg::OnLvnItemchangedTableHistoryinfo(NMHDR *pNMHDR, LRESULT *pResult)
 {

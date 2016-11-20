@@ -207,6 +207,7 @@
     <ClInclude Include="ConfigDlg.h" />
     <ClInclude Include="Connection.h" />
     <ClInclude Include="evp.h" />
+    <ClInclude Include="HistoryContentDlg.h" />
     <ClInclude Include="HitoryInfoDlg.h" />
     <ClInclude Include="ISonicUI.h" />
     <ClInclude Include="Log.h" />
@@ -230,6 +231,7 @@
     <ClCompile Include="ConfigDlg.cpp" />
     <ClCompile Include="Connection.cpp" />
     <ClCompile Include="evp.cpp" />
+    <ClCompile Include="HistoryContentDlg.cpp" />
     <ClCompile Include="HitoryInfoDlg.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="LoginDlg.cpp" />

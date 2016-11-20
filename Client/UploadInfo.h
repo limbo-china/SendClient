@@ -69,4 +69,5 @@ public:
 	CStatic m_sURL;
 	afx_msg void OnEnChangeInfoSubject();
 	afx_msg void OnEnChangeEditUrl();
+	BOOL CUploadInfo::PreTranslateMessage(MSG* pMsg);
 };
